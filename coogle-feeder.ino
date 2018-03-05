@@ -5,10 +5,10 @@
 #define SERIAL_BAUD 115200
 #endif
 
-#define ACTION_TOPIC "/feeder/diana/1"
+#define ACTION_TOPIC "/feeder/saltwater/1"
 
-//#define USE_NEMA17
-#define USE_28BYJ
+#define USE_NEMA17
+//#define USE_28BYJ
 
 #ifdef USE_28BYJ
 #define MOTOR_28BYJ_PIN1 5
@@ -95,7 +95,7 @@ void loop() {
   
   if(stepper->distanceToGo() == 0) {
     if(turnsToExecute > 0) {
-      stepper->moveTo(stepper->currentPosition() + ((HALF_STEP * 2) * turnsToExecute));
+      stepper->moveTo(stepper->currentPosition() + ((HALF_STEP / 2) * turnsToExecute));
       turnsToExecute = 0;
 
        
