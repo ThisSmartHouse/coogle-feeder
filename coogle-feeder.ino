@@ -16,9 +16,9 @@
 #define MOTOR_28BYJ_PIN3 12
 #define MOTOR_28BYJ_PIN4 13
 #define MOTOR_TYPE AccelStepper::HALF4WIRE
-#define HALF_STEP 16
-#define STEPPER_SPEED 200
-#define STEPPER_ACCEL 50
+#define HALF_STEP 1024
+#define STEPPER_SPEED 300
+#define STEPPER_ACCEL 100
 #endif
 
 #ifdef USE_NEMA17
@@ -45,7 +45,7 @@ void setup() {
 #endif
 
 #ifdef USE_28BYJ
-  stepper = new AccelStepper(MOTOR_TYPE, MOTOR_28BYJ_PIN1, MOTOR_28BYJ_PIN2, MOTOR_28BYJ_PIN3, MOTOR_28BYJ_PIN4);
+  stepper = new AccelStepper(MOTOR_TYPE, MOTOR_28BYJ_PIN1, MOTOR_28BYJ_PIN3, MOTOR_28BYJ_PIN2, MOTOR_28BYJ_PIN4);
 #endif
 
   iot = new CoogleIOT(LED_BUILTIN);
@@ -95,10 +95,12 @@ void loop() {
   
   if(stepper->distanceToGo() == 0) {
     if(turnsToExecute > 0) {
+      stepper->enableOutputs();
       stepper->moveTo(stepper->currentPosition() + ((HALF_STEP * 2) * turnsToExecute));
-      turnsToExecute = 0;
-
-       
+      turnsToExecute--;
+    } else {
+      stepper->setCurrentPosition(0);
+      stepper->disableOutputs();
     }
   }
   
