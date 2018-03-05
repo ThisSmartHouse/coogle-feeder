@@ -5,25 +5,48 @@
 #define SERIAL_BAUD 115200
 #endif
 
-#ifndef STEPPER_SPEED
-#define STEPPER_SPEED 1000
+#define ACTION_TOPIC "/feeder/diana/1"
+
+//#define USE_NEMA17
+#define USE_28BYJ
+
+#ifdef USE_28BYJ
+#define MOTOR_28BYJ_PIN1 5
+#define MOTOR_28BYJ_PIN2 4
+#define MOTOR_28BYJ_PIN3 12
+#define MOTOR_28BYJ_PIN4 13
+#define MOTOR_TYPE AccelStepper::HALF4WIRE
+#define HALF_STEP 16
+#define STEPPER_SPEED 200
+#define STEPPER_ACCEL 50
 #endif
 
-#ifndef STEPPER_ACCEL
+#ifdef USE_NEMA17
+#define NEMA_STEP_PIN D1
+#define NEMA_DIR_PIN D2
+#define HALF_STEP 800
+#define MOTOR_TYPE AccelStepper::DRIVER
+#define STEPPER_SPEED 1000
 #define STEPPER_ACCEL 500
 #endif
-
-#define ACTION_TOPIC "/feeder/saltwater/1"
 
 CoogleIOT *iot;
 PubSubClient *mqtt;
 
-AccelStepper stepper(AccelStepper::DRIVER, D1, D2);
+AccelStepper *stepper;
 
 char msg[150];
 int turnsToExecute = 0;
 
 void setup() {
+
+#ifdef USE_NEMA17
+  stepper = new AccelStepper(MOTOR_TYPE, NEMA_STEP_PIN, NEMA_DIR_PIN);
+#endif
+
+#ifdef USE_28BYJ
+  stepper = new AccelStepper(MOTOR_TYPE, MOTOR_28BYJ_PIN1, MOTOR_28BYJ_PIN2, MOTOR_28BYJ_PIN3, MOTOR_28BYJ_PIN4);
+#endif
 
   iot = new CoogleIOT(LED_BUILTIN);
 
@@ -35,9 +58,9 @@ void setup() {
   iot->logPrintf(INFO, "MQTT Action Topic: %s", ACTION_TOPIC);
   iot->info("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
 
-  stepper.setMaxSpeed(STEPPER_SPEED);
-  stepper.setAcceleration(STEPPER_ACCEL);
-  stepper.setSpeed(STEPPER_SPEED);
+  stepper->setMaxSpeed(STEPPER_SPEED);
+  stepper->setAcceleration(STEPPER_ACCEL);
+  stepper->setSpeed(STEPPER_SPEED);
     
   iot->info("");
 
@@ -70,14 +93,14 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
 void loop() {
   iot->loop();
   
-  if(stepper.distanceToGo() == 0) {
+  if(stepper->distanceToGo() == 0) {
     if(turnsToExecute > 0) {
-      stepper.moveTo(stepper.currentPosition() + (1600 * turnsToExecute));
+      stepper->moveTo(stepper->currentPosition() + ((HALF_STEP * 2) * turnsToExecute));
       turnsToExecute = 0;
 
        
     }
   }
   
-  stepper.run();
+  stepper->run();
 }
